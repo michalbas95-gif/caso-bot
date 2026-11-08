@@ -3,11 +3,28 @@ import random
 import sqlite3
 import threading
 import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import telebot
 from telebot.types import (
     InlineKeyboardMarkup, InlineKeyboardButton, 
     ReplyKeyboardMarkup, KeyboardButton, LabeledPrice
 )
+
+# --- PROSTY SERWER WWW DLA RENDER (ŻEBY DARMOWY WEB SERVICE NIE WYGASŁ) ---
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot Kasyno dziala 24/7!")
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
+    server.serve_forever()
+
+# Uruchamiamy serwer WWW w osobnym wątku w tle
+threading.Thread(target=run_web_server, daemon=True).start()
+# -------------------------------------------------------------------------
 
 TOKEN = "9150172701:AAFIZT8-MtcjLDVKWNGDZrJNwOvR3oVRWXI"
 
@@ -663,7 +680,7 @@ def handle_query(call):
             balance, bet, free_spins, _, game_id, _ = get_user_data(user_id)
             pln_val = balance / 100.0
             bot.answer_callback_query(call.id, f"💰 Saldo: {balance} monet (~{pln_val:.2f} zł)", show_alert=True)
-            bot.edit_message_text(get_panel_text(user_id, balance, bet, free_spins, game_id), chat_id=chat_id, message_id=msg_id, parse_mode="Markdown", reply_markup=get_menu(user_id, balance, bet, free_spins, game_id))
+            bot.edit_message_text(get_panel_text(user_id, balance, bet, free_spins, game_id), chat_id=chat_id, message_id=msg_id, parse_package="Markdown", reply_markup=get_menu(user_id, balance, bet, free_spins, game_id))
 
     except Exception:
         pass
@@ -694,6 +711,11 @@ try:
 except Exception:
     pass
 
-print(">>> BOT KASYNO WEB CLOUD URUCHOMIONY! <<<")
-bot.remove_webhook()
+# Przed uruchomieniem bota czyszczymy stary webhook, żeby nie było błędu 409
+try:
+    bot.remove_webhook()
+except Exception:
+    pass
+
+print(">>> BOT KASYNO WEB SERVICE URUCHOMIONY! <<<")
 bot.infinity_polling(timeout=10, long_polling_timeout=5, allowed_updates=["message", "callback_query", "pre_checkout_query", "chat_member", "my_chat_member"])
