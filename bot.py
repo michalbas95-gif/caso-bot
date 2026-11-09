@@ -26,7 +26,9 @@ def run_web_server():
 threading.Thread(target=run_web_server, daemon=True).start()
 # -------------------------------------------------------------------------
 
-TOKEN = "9150172701:AAFIZT8-MtcjLDVKWNGDZrJNwOvR3oVRWXI"
+TOKEN = os.environ.get("
+9150172701:AAGWOJLkF5wquHeCPJ_9a6hyVL6ABc6Uo-E")
+
 
 bot = telebot.TeleBot(TOKEN, threaded=True, num_threads=4)
 
